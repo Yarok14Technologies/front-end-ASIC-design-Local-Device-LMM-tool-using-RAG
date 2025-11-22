@@ -68,69 +68,13 @@ The system operates in a continuous, iterative loop to ensure functional correct
 
 The project is a full-stack application with a Python/FastAPI backend, a dedicated RAG knowledge base, and a React/Vite frontend.
 
-front-end-ASIC-design-LMM-tool-using-RAG/
-vlsi-llm-rag/
-├── README.md
-├── requirements.txt
-├── .env.example
-├── docker-compose.yml
-|
-├── backend/
-│   ├── main.py
-│   ├── config.py
-│   ├── requirements.txt
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── routes.py
-│   │   │   └── models.py
-│   │   ├── core/
-│   │   │   ├── __init__.py
-│   │   │   └── config.py
-│   │   ├── services/  (Core LLM/RAG/VLSI Logic)
-│   │   │   ├── __init__.py
-│   │   │   ├── rag_service.py
-│   │   │   ├── llm_service.py
-│   │   │   ├── rtl_generator.py
-│   │   │   ├── vip_generator.py
-│   │   │   └── file_service.py
-│   │   └── utils/
-│   │       ├── __init__.py
-│   │       ├── file_parser.py
-│   │       └── prompts.py
-|
-├── knowledge_base/  (Retrieval-Augmented Data)
-│   ├── specs/
-│   ├── protocols/
-│   └── vector_db/
-|
-├── frontend/ (React/Vite Application)
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       ├── App.css
-│       ├── components/ (Reusable UI)
-│       │   ├── FileUpload.jsx
-│       │   ├── CodeViewer.jsx
-│       │   ├── StatusPanel.jsx
-│       │   └── RequirementsForm.jsx
-│       └── pages/ (Main Views)
-│           ├── Home.jsx
-│           ├── Upload.jsx
-│           ├── Generate.jsx
-│           └── Outputs.jsx
-|
-└── examples/
-    ├── axi4_lite/
-    │   ├── spec.txt
-    │   └── requirements.md
-    └── uart/
-        ├── spec.txt
-        └── requirements.md
+front-end-ASIC-design-LMM-tool-using-RAG
+
+vlsi-llm-rag/ ├── README.md ├── requirements.txt ├── .env.example ├── docker-compose.yml | ├── backend/ │ ├── main.py │ ├── config.py │ ├── requirements.txt │ ├── app/ │ │ ├── init.py │ │ ├── api/ │ │ │ ├── init.py │ │ │ ├── routes.py │ │ │ └── models.py │ │ ├── core/ │ │ │ ├── init.py │ │ │ └── config.py │ │ ├── services/
+
+│ │ │ ├── init.py │ │ │ ├── rag_service.py │ │ │ ├── llm_service.py │ │ │ ├── rtl_generator.py │ │ │ ├── vip_generator.py │ │ │ └── file_service.py │ │ └── utils/ │ │ ├── init.py │ │ ├── file_parser.py │ │ └── prompts.py | ├── knowledge_base/
+
+│ ├── specs/ │ ├── protocols/ │ └── vector_db/ | ├── frontend/ │ ├── package.json │ ├── vite.config.js │ ├── index.html │ └── src/ │ ├── main.jsx │ ├── App.jsx │ ├── App.css │ ├── components/ │ │ ├── FileUpload.jsx │ │ ├── CodeViewer.jsx │ │ ├── StatusPanel.jsx │ │ └── RequirementsForm.jsx │ └── pages/ │ ├── Home.jsx │ ├── Upload.jsx │ ├── Generate.jsx │ └── Outputs.jsx | └── examples/ ├── axi4_lite/ │ ├── spec.txt │ └── requirements.md └── uart/ ├── spec.txt └── requirements.md
 
 ***
 
