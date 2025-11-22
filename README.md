@@ -168,3 +168,29 @@ The application will be accessible at `http://localhost:3000`.
 ## 📁 Repository Structure
 
 The project is a full-stack application with a Python/FastAPI backend, a dedicated RAG knowledge base, and a React/Vite frontend.
+
+
+## 💻 System Requirements
+
+Running a full-stack RAG system with a local backend, frontend, and vector database requires sufficient local machine resources, primarily due to the performance demands of the Large Language Model (LLM) component and containerization overhead.
+
+### 💾 Hardware Requirements
+
+| Component | Minimum Requirement | Recommended Specification | Notes |
+|-----------|------------------|--------------------------|-------|
+| RAM (System Memory) | 8 GB | 16 GB or 32 GB | 16 GB is strongly recommended to comfortably run Docker, the vector database, and the Python backend concurrently. |
+| CPU | Dual-Core Modern CPU | Quad-Core (4+ Cores) | Necessary for running multiple containers (FastAPI, Vector DB, Frontend) and handling computationally intensive tasks like vector chunking. |
+| Storage (Disk Space) | 50 GB Free Space | 100 GB+ SSD | Required for Docker images, cached LLM models (if self-hosted), and the Knowledge Base (`vector_db/`) storage. An SSD is critical for fast vector search and retrieval performance. |
+| GPU (Optional) | N/A | NVIDIA GPU (8GB+ VRAM) | Recommended if you plan to host the LLM locally (e.g., using Ollama/vLLM for models like Llama 3) for faster RTL generation times. |
+
+### ⚙️ Software Prerequisites
+
+The entire stack is designed to be launched using Docker Compose for a consistent, isolated environment.
+
+| Component | Requirement | Notes |
+|-----------|------------|-------|
+| Containerization | Docker Engine (20.10+) | Required to build and run the entire application stack. |
+| Orchestration | Docker Compose (v2.0+) | Used to manage the multiple service containers (Backend, Frontend, DB). |
+| OS Support | Windows 10/11, macOS, or Linux | Must support Docker Desktop (ensure virtualization is enabled in BIOS). |
+| Python | Python 3.8+ | Used for the backend/FastAPI application and RAG logic (primarily for development outside of Docker). |
+| Node.js/npm | Node.js 16+ | Used for the frontend/React/Vite development server (primarily for development outside of Docker). |
