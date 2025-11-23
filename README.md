@@ -141,8 +141,8 @@ vlsi-llm-rag/
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/OWNER/front-end-ASIC-design-LMM-tool-using-RAG.git](https://github.com/OWNER/front-end-ASIC-design-LMM-tool-using-RAG.git)
-    cd front-end-ASIC-design-LMM-tool-using-RAG
+    git clone [https://github.com/OWNER/front-end-ASIC-design-Local-Device-LMM-tool-using-RAG.git](https://github.com/OWNER/front-end-ASIC-design-Local-Device-LMM-tool-using-RAG.git)
+    cd front-end-ASIC-design-Local-Device-LMM-tool-using-RAG
     ```
 2.  **Setup Environment Variables:**
     ```bash
