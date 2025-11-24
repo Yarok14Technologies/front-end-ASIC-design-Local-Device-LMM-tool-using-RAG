@@ -1,0 +1,28 @@
+UART Controller Design
+
+Specification:
+- Universal Asynchronous Receiver/Transmitter
+- Configurable baud rate: 9600, 19200, 38400, 57600, 115200
+- 8 data bits, no parity, 1 stop bit
+- 16-byte transmit and receive FIFOs
+- Programmable interrupt generation
+
+Interface:
+- APB slave interface for configuration
+- Serial TX and RX lines
+- Clock and reset inputs
+- Interrupt output
+
+Features:
+- Baud rate generation
+- FIFO buffering
+- Overrun error detection
+- Break condition detection
+- Loopback mode for testing
+
+Registers:
+- Control Register (CTRL)
+- Status Register (STAT)
+- Baud Rate Divisor (BRD)
+- Transmit Data (TXD)
+- Receive Data (RXD)
