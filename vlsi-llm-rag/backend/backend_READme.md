@@ -2212,12 +2212,409 @@ pytest -q
 
 ---
 
-If you want, I can now:
+Great — since you want **direct Alembic + database + auth + refresh-token + RBAC** integration and **the ability to patch your existing repo**, I’ll deliver **Option 3** first:
 
-* patch your existing repo files directly (if you paste file list), or
-* generate a zip with all added files, or
-* produce the `alembic.ini` and full Alembic config and run commands you should run.
+# ✅ **Full Alembic Setup**
 
-Which one should I produce next?
+Includes:
+
+* `alembic.ini`
+* `/alembic/` folder (env.py, script.py.mako)
+* First migration (`versions/`) for **users**, **roles**, **user_roles**, **refresh_tokens**
+* Commands you will run
+
+If you want later, I can generate a **ZIP full repo**, or **patch your files directly** once you paste your folder structure.
+
+---
+
+# 🚀 **1. alembic.ini (place in backend root)**
+
+```ini
+[alembic]
+script_location = alembic
+sqlalchemy.url = postgresql+psycopg2://postgres:postgres@localhost:5432/mydb
+
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARN
+handlers = console
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers = console
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+```
+
+---
+
+# 🚀 **2. Folder: /alembic/env.py**
+
+```python
+from logging.config import fileConfig
+from sqlalchemy import engine_from_config, pool
+from alembic import context
+from app.database import Base  # our models Base metadata
+from app.models.user import User
+from app.models.role import Role
+from app.models.user_role import UserRole
+from app.models.refresh_token import RefreshToken
+import os
+
+config = context.config
+
+# Load DB URL from environment
+config.set_main_option(
+    "sqlalchemy.url",
+    os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/mydb")
+)
+
+fileConfig(config.config_file_name)
+
+target_metadata = Base.metadata
+
+def run_migrations_offline():
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+def run_migrations_online():
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(connection=connection, target_metadata=target_metadata)
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+```
+
+---
+
+# 🚀 **3. /alembic/script.py.mako**
+
+```mako
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+def upgrade() -> None:
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    ${downgrades if downgrades else "pass"}
+```
+
+---
+
+# 🚀 **4. First Migration File: /alembic/versions/<rev>_init_models.py**
+
+```python
+from alembic import op
+import sqlalchemy as sa
+
+revision = "0001_init_models"
+down_revision = None
+branch_labels = None
+depends_on = None
+
+def upgrade() -> None:
+    op.create_table(
+        "users",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("email", sa.String(255), unique=True, nullable=False),
+        sa.Column("password_hash", sa.String(255), nullable=False),
+        sa.Column("full_name", sa.String(255)),
+        sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    )
+
+    op.create_table(
+        "roles",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("name", sa.String(50), unique=True, nullable=False)
+    )
+
+    op.create_table(
+        "user_roles",
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id", ondelete="CASCADE")),
+        sa.Column("role_id", sa.Integer, sa.ForeignKey("roles.id", ondelete="CASCADE"))
+    )
+
+    op.create_table(
+        "refresh_tokens",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id", ondelete="CASCADE")),
+        sa.Column("jti", sa.String(64), nullable=False),
+        sa.Column("device_id", sa.String(255)),
+        sa.Column("ip", sa.String(45)),
+        sa.Column("user_agent", sa.String(255)),
+        sa.Column("token_hash", sa.String(255), nullable=False),
+        sa.Column("is_valid", sa.Boolean, default=True),
+        sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+        sa.Column("expires_at", sa.DateTime),
+    )
+
+
+def downgrade() -> None:
+    op.drop_table("refresh_tokens")
+    op.drop_table("user_roles")
+    op.drop_table("roles")
+    op.drop_table("users")
+```
+
+---
+
+# 🚀 **5. Alembic Run Commands**
+
+### **Initialize Alembic**
+
+```
+alembic init alembic
+```
+
+### **Create migration**
+
+(Already provided above — but if you modify models)
+
+```
+alembic revision --autogenerate -m "init models"
+```
+
+### **Run migrations**
+
+```
+alembic upgrade head
+```
+
+---
+
+# 🚀 **6. SQLAlchemy Models (Full Production Grade)**
+
+## 📌 **app/database.py**
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5432/mydb"
+)
+
+engine = create_engine(DATABASE_URL, echo=False, future=True)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+```
+
+---
+
+## 📌 **app/models/user.py**
+
+```python
+from sqlalchemy import Column, Integer, String, DateTime, func
+from app.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255))
+    created_at = Column(DateTime, server_default=func.now())
+```
+
+---
+
+## 📌 **app/models/role.py**
+
+```python
+from sqlalchemy import Column, Integer, String
+from app.database import Base
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), unique=True, nullable=False)
+```
+
+---
+
+## 📌 **app/models/user_role.py**
+
+```python
+from sqlalchemy import Column, Integer, ForeignKey
+from app.database import Base
+
+class UserRole(Base):
+    __tablename__ = "user_roles"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+```
+
+---
+
+## 📌 **app/models/refresh_token.py**
+
+```python
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func
+from app.database import Base
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    jti = Column(String(64), nullable=False)
+    device_id = Column(String(255))
+    ip = Column(String(45))
+    user_agent = Column(String(255))
+    token_hash = Column(String(255), nullable=False)
+    is_valid = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    expires_at = Column(DateTime)
+```
+
+---
+
+# 🚀 **7. Unit Tests for Authentication Flow**
+
+Folder:
+
+```
+/tests/auth/
+```
+
+## ✔ **test_register.py**
+
+```python
+import pytest
+from httpx import AsyncClient
+from app.main import app
+
+@pytest.mark.asyncio
+async def test_register():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        res = await ac.post("/auth/register", json={
+            "email": "bibin@example.com",
+            "password": "password123",
+            "full_name": "Bibin"
+        })
+    assert res.status_code == 201
+```
+
+---
+
+## ✔ **test_login_refresh_logout.py**
+
+```python
+import pytest
+from httpx import AsyncClient
+from app.main import app
+
+@pytest.mark.asyncio
+async def test_login_refresh_logout():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        login = await ac.post("/auth/login", json={
+            "email": "bibin@example.com",
+            "password": "password123"
+        })
+        assert login.status_code == 200
+
+        cookies = login.cookies
+
+        refresh = await ac.post("/auth/refresh", cookies=cookies)
+        assert refresh.status_code == 200
+
+        logout = await ac.post("/auth/logout", cookies=cookies)
+        assert logout.status_code == 200
+```
+
+---
+
+## ✔ **test_rbac.py**
+
+```python
+import pytest
+from httpx import AsyncClient
+from app.main import app
+
+@pytest.mark.asyncio
+async def test_role_access():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        
+        # login as admin
+        login = await ac.post("/auth/login", json={
+            "email": "admin@example.com",
+            "password": "admin123"
+        })
+
+        cookies = login.cookies
+
+        res = await ac.get("/admin/dashboard", cookies=cookies)
+        assert res.status_code == 200  # allowed
+```
+
+---
+
+# 🚀 If You Want:
+
+### ✔ I can **patch your entire repo** if you paste:
+
+```
+backend/
+  app/
+    ...
+  requirements.txt
+  docker-compose.yml
+  Dockerfile
+```
+
+
 
 
